@@ -5,11 +5,11 @@ import mongoose from "mongoose"
 const models = {}
 let modelSchema
 
+/*
+ * Build Model Field Schema
+ */
 const setModels = async () => {
   _.forEach(modelSchema, (model, key) => {
-    /*
-     * Build Model Field Schema
-     */
     const fields = {}
     _.forEach(model.fields, (fieldOpts, fieldKey) => {
       fields[fieldKey] = { type: mongoose.Types[fieldOpts["type"]] || fieldOpts["type"], default: fieldOpts["default"] }

@@ -1,11 +1,11 @@
 import fetch from "node-fetch"
 import _ from "lodash"
-import mongoose from "mongoose"
 import { ModelService } from "./ModelService.js"
-import { ApolloServer, gql } from "apollo-server"
+import { gql } from "apollo-server"
 import Pluralize from "pluralize"
 
 import GraphQLJSON, { GraphQLJSONObject } from "graphql-type-json"
+import { WorkerService } from "./WorkerService.js"
 
 const models = {}
 const getResolvers = async () => {
@@ -34,6 +34,7 @@ const getResolvers = async () => {
         })
         return await response.json()
       },
+
       Fields: async () => {
         const params = { access_token: process.env.TDP_ACCESS_TOKEN }
         const response = await fetch(process.env.API_ENDPOINT + "/fields_schema", {
@@ -46,6 +47,32 @@ const getResolvers = async () => {
         return await response.json()
       },
     },
+
+    Mutation: {
+      requestAuthCode: async (parent, args, context, info) => {
+        const user = await ModelService.findOne({ model: "User", args: { email: args.email } })
+        if (user) {
+          await WorkerService.enqueue({ queue: "critical", job: "SendEmailAuthorizationJob", args: [{ user_id: user.id }] })
+          return { success: true, userId: user.id }
+        } else {
+          return { success: false }
+        }
+      },
+
+      confirmAuthCode: async (parent, args, context, info) => {
+        console.log(args)
+        const params = { access_token: process.env.TDP_ACCESS_TOKEN, authentication_code: args.authentication_code, user_id: args.user_id }
+        const response = await fetch(process.env.API_ENDPOINT + "/confirm_authentication_code", {
+          method: "POST", // *GET, POST, PUT, DELETE, etc.
+          mode: "cors", // no-cors, *cors, same-origin
+          cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(params), // body data type must match "Content-Type" header
+        })
+        return await response.json()
+      },
+    },
+
     JSON: GraphQLJSON,
     JSONObject: GraphQLJSONObject,
   }
@@ -75,13 +102,20 @@ const getTypeDefinitions = async () => {
     scalar Date
     scalar JSON
     scalar JSONObject
- 
+    type Session {
+      access_token: String
+      id: ID
+      user: User
+    }
     type ListMetadata {
       count: Int!
     }
   `,
   ]
 
+  /*
+   *
+   */
   const findQueries = [
     `
       Options: JSONObject
@@ -141,8 +175,14 @@ const getTypeDefinitions = async () => {
   const schema = `type Query {
     ${_.join(findQueries, `\n`)}
     ${_.join(allQueries, `\n`)}
-    ${_.join(metaQueries, `\n`)}    
+    ${_.join(metaQueries, `\n`)}
   }
+
+  type Mutation {
+    requestAuthCode(email: String): JSONObject
+    confirmAuthCode(user_id: ID, authentication_code: String): JSONObject
+  }
+
   ${_.join(typeDefinitions, `\n`)}
   ${_.join(filterInputs, `\n`)}
   `
@@ -156,40 +196,5 @@ const getTypeDefinitions = async () => {
   //   const string = ``
   // })
 }
-
-// const UserSchema = new Schema({
-//     _id: {
-//       type: mongoose.ObjectId,
-//     },
-//     cb_handle: {
-//       type: String,
-//     },
-//     phone_number: {
-//       type: String,
-//     },
-//     contact_phone_number: {
-//       type: String,
-//     },
-//     phone_number_extension: {
-//       type: String,
-//     },
-//   })
-//   export default mongoose.model("User", UserSchema, "users")
-
-// const setResolvers = async () => {
-//   const modelSchema = await ModelService.getModelSchema()
-
-//   // _.forEach(modelSchema, (model, key) => {
-//   //   /*
-//   //    * Build Model Field Schema
-//   //    */
-//   //   const fields = {}
-//   //   _.forEach(model.fields, (fieldOpts, fieldKey) => {
-//   //     fields[fieldKey] = { type: fieldOpts["type"], default: fieldOpts["default"] }
-//   //   })
-//   //   const schema = new mongoose.Schema(fields)
-//   //   models[key] = mongoose.model(key, schema, model.collection)
-//   // })
-// }
 
 export const GraphService = { getResolvers, getTypeDefinitions }
