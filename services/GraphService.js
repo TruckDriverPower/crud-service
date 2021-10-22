@@ -60,8 +60,7 @@ const getResolvers = async () => {
       },
 
       confirmAuthCode: async (parent, args, context, info) => {
-        console.log(args)
-        const params = { access_token: process.env.TDP_ACCESS_TOKEN, authentication_code: args.authentication_code, user_id: args.user_id }
+        const params = { access_token: process.env.TDP_ACCESS_TOKEN, authentication_code: args.authentication_code, user_id: args.user_id, context: args.context }
         const response = await fetch(process.env.API_ENDPOINT + "/confirm_authentication_code", {
           method: "POST", // *GET, POST, PUT, DELETE, etc.
           mode: "cors", // no-cors, *cors, same-origin
@@ -70,6 +69,24 @@ const getResolvers = async () => {
           body: JSON.stringify(params), // body data type must match "Content-Type" header
         })
         return await response.json()
+      },
+
+      offererCallPush: async (parent, args, context, info) => {
+        const params = { offerId: `${args.offer_id}` }
+        let url
+        if (args.immediate) url = process.env.TWILIO_CALL_SERVICE_URL + "/immediate-offerer-call-push"
+        else url = process.env.TWILIO_CALL_SERVICE_URL + "/offerer-call-push"
+
+        const response = await fetch(url, {
+          method: "POST", // *GET, POST, PUT, DELETE, etc.
+          mode: "cors", // no-cors, *cors, same-origin
+          cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+          headers: { "Content-Type": "application/json", authorization: process.env.TWILIO_SERVICE_ACCESS_TOKEN },
+          body: JSON.stringify(params), // body data type must match "Content-Type" header
+        })
+        const result = await response.json()
+
+        if (result === 200) return { success: true }
       },
     },
 
@@ -89,6 +106,10 @@ const getResolvers = async () => {
 
     resolvers["Query"][`_all${Pluralize(key)}Meta`] = async (parent, args, context, info) => {
       return { count: 10 }
+    }
+
+    resolvers["Mutation"][`create${key}`] = async (parent, args, context, info) => {
+      return ModelService.create({ model: key, args })
     }
   })
 
@@ -126,6 +147,7 @@ const getTypeDefinitions = async () => {
   const allQueries = []
   const metaQueries = []
   const filterInputs = []
+  const crudMutations = []
 
   _.forEach(modelSchema, (model, key) => {
     /*
@@ -133,7 +155,7 @@ const getTypeDefinitions = async () => {
      */
     const typeDefinition = `type ${key} {
       id: ID    
-      offers: [Offer]
+      offers: [Offer]       
     ${_.join(
       _.map(model.fields, (field, key) => {
         return `${key}: ${field.graphqlType}`
@@ -167,9 +189,38 @@ const getTypeDefinitions = async () => {
       id: ID
       ids: [ID]
       offeree_id: ID
+      company_id: ID 
       title: String 
     }`
     filterInputs.push(filterInput)
+
+    /*
+     * Define Create/Edit Mutations
+     */
+    const createMutation = `
+      create${key}(
+        ${_.join(
+          _.map(model.fields, (field, key) => {
+            return `${key}: ${field.graphqlType}`
+          })
+        )}        
+      
+      ): ${key}
+    `
+    crudMutations.push(createMutation)
+
+    const updateMutation = `
+      update${key}(
+        ${_.join(
+          _.map(model.fields, (field, key) => {
+            return `${key}: ${field.graphqlType}`
+          })
+        )}              
+      ): ${key}
+    `
+    crudMutations.push(updateMutation)
+
+    // const deleteMuatation = `delete${key}(id: ID!): Post`
   })
 
   const schema = `type Query {
@@ -180,7 +231,10 @@ const getTypeDefinitions = async () => {
 
   type Mutation {
     requestAuthCode(email: String): JSONObject
-    confirmAuthCode(user_id: ID, authentication_code: String): JSONObject
+    confirmAuthCode(user_id: ID, authentication_code: String, context: String): JSONObject
+    offererCallPush(offer_id: ID, immediate: Boolean): JSONObject
+
+    ${_.join(crudMutations, `\n`)}
   }
 
   ${_.join(typeDefinitions, `\n`)}
