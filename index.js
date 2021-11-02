@@ -32,6 +32,7 @@ const httpServer = http.createServer(app)
 const server = new ApolloServer({
   typeDefs,
   resolvers,
+  introspection: true,
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
 
   formatError: (err) => {
