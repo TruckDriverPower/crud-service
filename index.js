@@ -45,7 +45,7 @@ const server = new ApolloServer({
 })
 await server.start()
 server.applyMiddleware({ app })
-const port = 3008
+const port = process.env.PORT || 3008
 await new Promise((resolve) => httpServer.listen({ port }, resolve))
 console.log("⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐")
 console.log(`🚀 Server ready at ${server.graphqlPath}`)
