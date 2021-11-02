@@ -109,7 +109,11 @@ const getResolvers = async () => {
     }
 
     resolvers["Mutation"][`create${key}`] = async (parent, args, context, info) => {
-      return ModelService.create({ model: key, args })
+      return await ModelService.create({ model: key, args })
+    }
+
+    resolvers["Mutation"][`update${key}`] = async (parent, args, context, info) => {
+      return await ModelService.updateOne({ model: key, id: args["id"], args })
     }
   })
 
@@ -191,7 +195,8 @@ const getTypeDefinitions = async () => {
       offeree_id: ID
       company_id: ID 
       title: String 
-    }`
+    }
+    `
     filterInputs.push(filterInput)
 
     /*
@@ -211,13 +216,14 @@ const getTypeDefinitions = async () => {
 
     const updateMutation = `
       update${key}(
+        id: ID!, 
         ${_.join(
-          _.map(model.fields, (field, key) => {
-            return `${key}: ${field.graphqlType}`
-          })
+          _.map(model.fields, (field, key) => `${key}: ${field.graphqlType}`),
+          ", "
         )}              
       ): ${key}
     `
+
     crudMutations.push(updateMutation)
 
     // const deleteMuatation = `delete${key}(id: ID!): Post`

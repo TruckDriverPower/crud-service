@@ -45,7 +45,6 @@ const getModels = async () => {
 const findOne = async ({ model, args }) => {
   const record = await models[model].findOne(args).exec()
   record["id"] = record["_id"]
-  console.warn(record, "<--pop")
   return record
 }
 
@@ -78,4 +77,20 @@ const create = async ({ model, args }) => {
   // return record
 }
 
-export const ModelService = { setModelSchema, setModels, getModels, getModelSchema, findOne, find, create }
+const updateOne = async ({ model, id, args }) => {
+  await models[model].updateOne({ id }, args)
+  const record = await models[model].findOne({ model, args: { id } })
+  return record
+
+  // return await new Promise((resolve, reject) => {
+  //     console.warn(record)
+  //     resolve(record)
+  //   })
+  // })
+  // await record.save()
+  // console.warn(record)
+  // // const record = await
+  // return record
+}
+
+export const ModelService = { setModelSchema, setModels, getModels, getModelSchema, findOne, find, create, updateOne }
