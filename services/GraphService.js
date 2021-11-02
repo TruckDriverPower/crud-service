@@ -69,6 +69,7 @@ const getResolvers = async () => {
           body: JSON.stringify(params), // body data type must match "Content-Type" header
         })
         const result = await response.json()
+        console.log(result)
         return result
       },
 

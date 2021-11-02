@@ -62,8 +62,11 @@ const server = new ApolloServer({
     if (!session || _.get(session, "access_token") !== token) throw new Error("invalid session")
 
     const user = await ModelService.findOne({ model: "User", args: { id: session.user_id } })
-    if (!user.customer_success_app_enabled) throw new Error("invalid permissions")
+    console.log(user)
+    console.log(token)
+    console.log(session)
     console.log(user.customer_success_app_enabled)
+    if (!user.customer_success_app_enabled) throw new Error("invalid permissions")
     // throw new Error("invalid key")
 
     // if (!isIntrospection) console.log(req)
