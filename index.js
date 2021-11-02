@@ -1,7 +1,10 @@
 import dotenv from "dotenv"
 import { DatabaseService } from "./services/DatabaseService.js"
 import express from "express"
-import { ApolloServer, gql } from "apollo-server"
+import { ApolloServerPluginDrainHttpServer } from "apollo-server-core"
+import { ApolloServer } from "apollo-server-express"
+
+import http from "http"
 
 import { ModelService } from "./services/ModelService.js"
 import { GraphService } from "./services/GraphService.js"
@@ -17,10 +20,18 @@ await ModelService.setModels()
 const typeDefs = await GraphService.getTypeDefinitions()
 const resolvers = await GraphService.getResolvers()
 
-// var app = express()
+var app = express()
+app.get("/", async (req, res) => {
+  return res.send("service online")
+})
+
+const httpServer = http.createServer(app)
+
 const server = new ApolloServer({
   typeDefs,
   resolvers,
+  plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+
   formatError: (err) => {
     console.log(err)
     // Don't give the specific errors to the client.
@@ -32,14 +43,11 @@ const server = new ApolloServer({
     return err
   },
 })
-
-// The `listen` method launches a web server.
-server.listen(3008).then(({ url }) => {
-  console.log("⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐")
-  console.log(`🚀  Server ready at ${url}`)
-  console.log("⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐")
-})
-
-// app.use("/graphql", graphqlHTTP({ schema: schema, rootValue: root, graphiql: true }))
-
-// app.listen(3008)
+await server.start()
+server.applyMiddleware({ app })
+const port = 3008
+await new Promise((resolve) => httpServer.listen({ port }, resolve))
+console.log("⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐")
+console.log(`🚀 Server ready at ${server.graphqlPath}`)
+console.log(`🚀 Server ready at http://localhost:${port}${server.graphqlPath}`)
+console.log("⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐")

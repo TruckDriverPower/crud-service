@@ -1,7 +1,7 @@
 import fetch from "node-fetch"
 import _ from "lodash"
 import { ModelService } from "./ModelService.js"
-import { gql } from "apollo-server"
+import { gql } from "apollo-server-express"
 import Pluralize from "pluralize"
 
 import GraphQLJSON, { GraphQLJSONObject } from "graphql-type-json"
