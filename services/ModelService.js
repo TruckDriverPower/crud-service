@@ -44,7 +44,7 @@ const getModels = async () => {
 
 const findOne = async ({ model, args }) => {
   const record = await models[model].findOne(args).exec()
-  record["id"] = record["_id"]
+  if (record) record["id"] = record["_id"]
   return record
 }
 

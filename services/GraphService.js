@@ -68,7 +68,8 @@ const getResolvers = async () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(params), // body data type must match "Content-Type" header
         })
-        return await response.json()
+        const result = await response.json()
+        return result
       },
 
       offererCallPush: async (parent, args, context, info) => {

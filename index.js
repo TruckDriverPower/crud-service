@@ -5,7 +5,7 @@ import { ApolloServerPluginDrainHttpServer } from "apollo-server-core"
 import { ApolloServer } from "apollo-server-express"
 import cors from "cors"
 import http from "http"
-
+import _ from "lodash"
 import { ModelService } from "./services/ModelService.js"
 import { GraphService } from "./services/GraphService.js"
 import { graphqlHTTP } from "express-graphql"
@@ -34,7 +34,41 @@ const server = new ApolloServer({
   resolvers,
   introspection: true,
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+  context: async ({ req }) => {
+    /*
+     * If introspection, check for introspection key
+     */
 
+    const isIntrospection =
+      req.body.operationName === "IntrospectionQuery" || req.body.operationName === "ModelIntrospection" || req.body.operationName === "RequestAuthCode" || req.body.operationName === "ConfirmAuthCode"
+
+    if (isIntrospection) {
+      const introspectionToken = req.headers.introspection || ""
+      if (!introspectionToken || introspectionToken !== process.env.ACCESS_KEY) throw new Error("invalid request")
+      else return {}
+    }
+
+    /*
+     * If normal Query - set user context/authorization
+     * Example Token: "5e97225de5026673cb3a11e6:TFX9bcmDgWtvpb4mstLJ"
+     */
+    const token = req.headers.authorization || ""
+    // if (!token) throw new Error("invalid")
+
+    // const tokenSplits = split(token, ":")
+    // const userId = tokenSplits[0]
+
+    const session = await ModelService.findOne({ model: "Session", args: { access_token: token, active: true } })
+    if (!session || _.get(session, "access_token") !== token) throw new Error("invalid session")
+
+    const user = await ModelService.findOne({ model: "User", args: { id: session.user_id } })
+    if (!user.customer_success_app_enabled) throw new Error("invalid permissions")
+    console.log(user.customer_success_app_enabled)
+    // throw new Error("invalid key")
+
+    // if (!isIntrospection) console.log(req)
+    return {}
+  },
   formatError: (err) => {
     console.log(err)
     // Don't give the specific errors to the client.
