@@ -3,7 +3,7 @@ import { DatabaseService } from "./services/DatabaseService.js"
 import express from "express"
 import { ApolloServerPluginDrainHttpServer } from "apollo-server-core"
 import { ApolloServer } from "apollo-server-express"
-
+import cors from "cors"
 import http from "http"
 
 import { ModelService } from "./services/ModelService.js"
@@ -21,6 +21,8 @@ const typeDefs = await GraphService.getTypeDefinitions()
 const resolvers = await GraphService.getResolvers()
 
 var app = express()
+app.use(cors())
+
 app.get("/", async (req, res) => {
   return res.send("service online")
 })
