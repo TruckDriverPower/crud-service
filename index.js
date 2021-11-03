@@ -66,7 +66,7 @@ const server = new ApolloServer({
     console.log(token)
     console.log(session)
     console.log(user.customer_success_app_enabled)
-    if (!user.customer_success_app_enabled) throw new Error("invalid permissions")
+    // if (!user.customer_success_app_enabled) throw new Error("invalid permissions")
     // throw new Error("invalid key")
 
     // if (!isIntrospection) console.log(req)
