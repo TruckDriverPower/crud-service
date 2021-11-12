@@ -27,6 +27,12 @@ app.get("/", async (req, res) => {
   return res.send("service online")
 })
 
+app.get("/working", async (req, res) => {
+  const record = await ModelService.findOne({ model: "ClientUser", args: { id: "5e971df0e502666422f5e0e7" } })
+
+  return res.send("service online")
+})
+
 const httpServer = http.createServer(app)
 
 const server = new ApolloServer({
@@ -57,18 +63,16 @@ const server = new ApolloServer({
 
     // const tokenSplits = split(token, ":")
     // const userId = tokenSplits[0]
-
-    const session = await ModelService.findOne({ model: "Session", args: { access_token: token, active: true } })
-    if (!session || _.get(session, "access_token") !== token) throw new Error("invalid session")
+    const session = await ModelService.findOne({ model: "Session", args: { access_token: token } })
+    if (!session || !_.get(session, "active") || _.get(session, "access_token") !== token) throw new Error("invalid session")
 
     const user = await ModelService.findOne({ model: "User", args: { id: session.user_id } })
-    console.log(user)
-    console.log(token)
-    console.log(session)
-    console.log(user.customer_success_app_enabled)
+    // console.log(user)
+    // console.log(token)
+    // console.log(session)
+    // console.log(user.customer_success_app_enabled)
     // if (!user.customer_success_app_enabled) throw new Error("invalid permissions")
     // throw new Error("invalid key")
-
     // if (!isIntrospection) console.log(req)
     return {}
   },

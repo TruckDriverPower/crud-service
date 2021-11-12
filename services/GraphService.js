@@ -69,7 +69,6 @@ const getResolvers = async () => {
           body: JSON.stringify(params), // body data type must match "Content-Type" header
         })
         const result = await response.json()
-        console.log(result)
         return result
       },
 
@@ -103,11 +102,13 @@ const getResolvers = async () => {
     }
 
     resolvers["Query"][`all${Pluralize(key)}`] = async (parent, args, context, info) => {
+      console.log(args)
       return await ModelService.find({ model: key, args })
     }
 
     resolvers["Query"][`_all${Pluralize(key)}Meta`] = async (parent, args, context, info) => {
-      return { count: 10 }
+      const count = await ModelService.count({ model: key, args })
+      return { count }
     }
 
     resolvers["Mutation"][`create${key}`] = async (parent, args, context, info) => {
@@ -195,6 +196,7 @@ const getTypeDefinitions = async () => {
       id: ID
       ids: [ID]
       offeree_id: ID
+      equipment: [String]
       company_id: ID 
       title: String 
     }

@@ -43,20 +43,58 @@ const getModels = async () => {
 }
 
 const findOne = async ({ model, args }) => {
+  const _type = _.get(modelSchema, `[${model}]["_type"]`)
+  if (_type) args["_type"] = _type
+
+  if (args["id"]) args = { _id: args["id"] }
   const record = await models[model].findOne(args).exec()
-  if (record) record["id"] = record["_id"]
-  return record
+  if (!!record) {
+    const result = { ...record.toObject(), id: record["_id"].toString() }
+    return result
+  }
 }
 
 const find = async ({ model, args }) => {
+  const params = { ...args.filter }
+
+  if (args.filter.ids) {
+    params["_id"] = { $in: args.filter.ids }
+    delete params["ids"]
+  }
+
+  if (!!params.q) {
+    params["$text"] = { $search: params.q }
+    delete params["q"]
+  }
+
+  const _type = _.get(modelSchema, `[${model}]["_type"]`)
+  if (_type) params["_type"] = _type
+
+  const count = args.perPage || 25
+  const skip = (args.page || 0) * count || 0
+  const sort = args.sortField || "id"
+  const order = args.sortOrder === "DESC" ? -1 : 1
+
+  console.log(model, JSON.stringify(params))
+  const records = await models[model]
+    .find(params)
+    .skip(skip)
+    .sort({ [sort]: order })
+    .limit(count)
+    .allowDiskUse(true)
+    .exec()
+  return records
+}
+
+const count = async ({ model, args }) => {
   const params = { ...args.filter }
   if (args.filter.ids) {
     params["_id"] = { $in: args.filter.ids }
     delete params["ids"]
   }
 
-  const records = await models[model].find(params).limit(10).exec()
-  return records
+  const count = await models[model].count(params).exec()
+  return count
 }
 
 const create = async ({ model, args }) => {
@@ -93,4 +131,4 @@ const updateOne = async ({ model, id, args }) => {
   // return record
 }
 
-export const ModelService = { setModelSchema, setModels, getModels, getModelSchema, findOne, find, create, updateOne }
+export const ModelService = { setModelSchema, setModels, getModels, getModelSchema, findOne, find, count, create, updateOne }
