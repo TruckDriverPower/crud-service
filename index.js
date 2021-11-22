@@ -28,7 +28,8 @@ app.get("/", async (req, res) => {
 })
 
 app.get("/working", async (req, res) => {
-  const record = await ModelService.findOne({ model: "ClientUser", args: { id: "5e971df0e502666422f5e0e7" } })
+  const record = await ModelService.getModelSchema()
+  console.log(record["ChatMessage"].fields.created_at)
 
   return res.send("service online")
 })

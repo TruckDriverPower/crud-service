@@ -17,7 +17,7 @@ const setModels = async () => {
         if (fieldOpts["default"]) fields[fieldKey]["default"] = fieldOpts["default"]
       }
     })
-    const schema = new mongoose.Schema(fields)
+    const schema = new mongoose.Schema(fields, { timestamps: true, createdAt: "created_at", updatedAt: "updated_at" })
     models[key] = mongoose.model(key, schema, model.collection)
   })
 }
@@ -75,7 +75,6 @@ const find = async ({ model, args }) => {
   const sort = args.sortField || "id"
   const order = args.sortOrder === "DESC" ? -1 : 1
 
-  console.log(model, JSON.stringify(params))
   const records = await models[model]
     .find(params)
     .skip(skip)
@@ -101,6 +100,8 @@ const create = async ({ model, args }) => {
   // return { ...args, id: "abc" }
   delete args["_id"]
   delete args["id"]
+  args["created_at"] = new Date()
+  args["updated_at"] = new Date()
   const record = await models[model].create(args)
   return record
 
@@ -116,6 +117,7 @@ const create = async ({ model, args }) => {
 }
 
 const updateOne = async ({ model, id, args }) => {
+  args["updated_at"] = new Date()
   await models[model].updateOne({ id }, args)
   const record = await models[model].findOne({ model, args: { id } })
   return record

@@ -112,6 +112,8 @@ const getResolvers = async () => {
     }
 
     resolvers["Mutation"][`create${key}`] = async (parent, args, context, info) => {
+      console.log("is this doing htins?")
+      console.log(key, args)
       return await ModelService.create({ model: key, args })
     }
 
@@ -163,11 +165,7 @@ const getTypeDefinitions = async () => {
     const typeDefinition = `type ${key} {
       id: ID    
       offers: [Offer]       
-    ${_.join(
-      _.map(model.fields, (field, key) => {
-        return `${key}: ${field.graphqlType}`
-      })
-    )}
+      ${_.join(_.compact(_.map(model.fields, (field, key) => (field.graphqlType ? `${key}: ${field.graphqlType}` : null))), ", ")}      
     }`
 
     typeDefinitions.push(typeDefinition)
@@ -195,12 +193,10 @@ const getTypeDefinitions = async () => {
       q: String
       id: ID
       ids: [ID]
-      offeree_id: ID
-      equipment: [String]
-      company_id: ID 
-      title: String 
+      ${_.join(_.compact(_.map(model.fields, (field, key) => (field.graphqlType ? `${key}: ${field.graphqlType}` : null))), ", ")}      
     }
     `
+    console.log(filterInput)
     filterInputs.push(filterInput)
 
     /*
@@ -208,23 +204,16 @@ const getTypeDefinitions = async () => {
      */
     const createMutation = `
       create${key}(
-        ${_.join(
-          _.map(model.fields, (field, key) => {
-            return `${key}: ${field.graphqlType}`
-          })
-        )}        
-      
+        ${_.join(_.compact(_.map(model.fields, (field, key) => (field.graphqlType ? `${key}: ${field.graphqlType}` : null))), ", ")}                         
       ): ${key}
     `
+
     crudMutations.push(createMutation)
 
     const updateMutation = `
       update${key}(
         id: ID!, 
-        ${_.join(
-          _.map(model.fields, (field, key) => `${key}: ${field.graphqlType}`),
-          ", "
-        )}              
+        ${_.join(_.compact(_.map(model.fields, (field, key) => (field.graphqlType ? `${key}: ${field.graphqlType}` : null))), ", ")}              
       ): ${key}
     `
 
