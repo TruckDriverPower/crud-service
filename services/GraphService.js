@@ -112,8 +112,6 @@ const getResolvers = async () => {
     }
 
     resolvers["Mutation"][`create${key}`] = async (parent, args, context, info) => {
-      console.log("is this doing htins?")
-      console.log(key, args)
       return await ModelService.create({ model: key, args })
     }
 
@@ -173,7 +171,7 @@ const getTypeDefinitions = async () => {
     /*
      * Define Record Query
      */
-    const findQuery = `${key}(id: ID!): ${key}`
+    const findQuery = `${key}(id: ID): ${key}`
     findQueries.push(findQuery)
 
     /*
