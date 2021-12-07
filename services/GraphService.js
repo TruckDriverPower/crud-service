@@ -102,7 +102,6 @@ const getResolvers = async () => {
     }
 
     resolvers["Query"][`all${Pluralize(key)}`] = async (parent, args, context, info) => {
-      console.log(args)
       return await ModelService.find({ model: key, args })
     }
 
@@ -116,7 +115,11 @@ const getResolvers = async () => {
     }
 
     resolvers["Mutation"][`update${key}`] = async (parent, args, context, info) => {
-      return await ModelService.updateOne({ model: key, id: args["id"], args })
+      console.warn(args)
+
+      const result = await ModelService.updateOne({ model: key, id: args["id"], args })
+      console.warn(result)
+      return result
     }
   })
 

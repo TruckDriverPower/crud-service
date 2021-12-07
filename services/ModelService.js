@@ -118,19 +118,12 @@ const create = async ({ model, args }) => {
 
 const updateOne = async ({ model, id, args }) => {
   args["updated_at"] = new Date()
-  await models[model].updateOne({ id }, args)
-  const record = await models[model].findOne({ model, args: { id } })
-  return record
-
-  // return await new Promise((resolve, reject) => {
-  //     console.warn(record)
-  //     resolve(record)
-  //   })
-  // })
-  // await record.save()
-  // console.warn(record)
-  // // const record = await
-  // return record
+  await models[model].updateOne({ _id: id }, args)
+  const record = await models[model].findOne({ _id: id }).exec()
+  if (!!record) {
+    const result = { ...record.toObject(), id: record["_id"].toString(), _id: record["_id"].toString() }
+    return result
+  }
 }
 
 export const ModelService = { setModelSchema, setModels, getModels, getModelSchema, findOne, find, count, create, updateOne }
