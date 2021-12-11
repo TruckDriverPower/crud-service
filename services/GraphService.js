@@ -115,10 +115,7 @@ const getResolvers = async () => {
     }
 
     resolvers["Mutation"][`update${key}`] = async (parent, args, context, info) => {
-      console.warn(args)
-
       const result = await ModelService.updateOne({ model: key, id: args["id"], args })
-      console.warn(result)
       return result
     }
   })

@@ -17,7 +17,7 @@ const setModels = async () => {
         if (fieldOpts["default"]) fields[fieldKey]["default"] = fieldOpts["default"]
       }
     })
-    const schema = new mongoose.Schema(fields, { timestamps: true, createdAt: "created_at", updatedAt: "updated_at" })
+    const schema = new mongoose.Schema(fields, { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } })
     models[key] = mongoose.model(key, schema, model.collection)
   })
 }
@@ -117,6 +117,8 @@ const create = async ({ model, args }) => {
 }
 
 const updateOne = async ({ model, id, args }) => {
+  // console.log(JSON.stringify(args))
+
   args["updated_at"] = new Date()
   await models[model].updateOne({ _id: id }, args)
   const record = await models[model].findOne({ _id: id }).exec()
